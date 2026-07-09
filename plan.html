@@ -1,0 +1,227 @@
+<title>Women in AI — Monthly Survey &amp; Check-In Plan</title>
+<style>
+:root {
+  --paper: #F1F2EF;
+  --paper-raised: #FFFFFF;
+  --ink: #171A18;
+  --muted: #5B625C;
+  --line: #D8DAD3;
+  --accent: #1F6F6B;
+  --accent-ink: #0E3E3B;
+  --accent-soft: #E1EEEC;
+  --accent2: #C97A2E;
+  --accent2-soft: #F5E6D3;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14181A;
+    --paper-raised: #1B2022;
+    --ink: #EDEFEA;
+    --muted: #9AA39C;
+    --line: #2A2F2C;
+    --accent: #4FB3AC;
+    --accent-ink: #C9EEEA;
+    --accent-soft: #16302E;
+    --accent2: #E0983F;
+    --accent2-soft: #3A2A16;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14181A; --paper-raised: #1B2022; --ink: #EDEFEA; --muted: #9AA39C;
+  --line: #2A2F2C; --accent: #4FB3AC; --accent-ink: #C9EEEA; --accent-soft: #16302E;
+  --accent2: #E0983F; --accent2-soft: #3A2A16;
+}
+:root[data-theme="light"] {
+  --paper: #F1F2EF; --paper-raised: #FFFFFF; --ink: #171A18; --muted: #5B625C;
+  --line: #D8DAD3; --accent: #1F6F6B; --accent-ink: #0E3E3B; --accent-soft: #E1EEEC;
+  --accent2: #C97A2E; --accent2-soft: #F5E6D3;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  margin: 0;
+  padding: 56px 24px 100px;
+  line-height: 1.55;
+}
+.page { max-width: 760px; margin: 0 auto; }
+
+.meta {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding-bottom: 20px; margin-bottom: 28px; border-bottom: 1px solid var(--line);
+}
+.meta span b { color: var(--ink); font-weight: 600; }
+
+h1 {
+  font-size: 33px; font-weight: 800; letter-spacing: -0.015em;
+  text-wrap: balance; margin: 0 0 10px;
+}
+.dek { color: var(--muted); font-size: 16px; max-width: 60ch; margin: 0 0 40px; }
+
+h2 {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--accent-ink); margin: 48px 0 4px; padding-left: 14px; border-left: 3px solid var(--accent);
+}
+h2 .num { font-family: var(--mono); color: var(--muted); font-weight: 500; margin-right: 8px; }
+.section-intro { color: var(--muted); font-size: 14.5px; margin: 8px 0 20px 17px; max-width: 62ch; }
+
+p { margin: 0 0 14px; }
+.card {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px;
+  padding: 18px 20px; margin: 0 0 14px 17px;
+}
+.card h3 { font-size: 15px; margin: 0 0 6px; font-weight: 700; }
+.card p { color: var(--muted); font-size: 14px; margin: 0; }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-left: 17px; }
+@media (max-width: 560px) { .card-grid { grid-template-columns: 1fr; } }
+.card-grid .card { margin-left: 0; }
+
+.qlist { list-style: none; margin: 0 0 8px 17px; padding: 0; counter-reset: q; }
+.qlist li {
+  counter-increment: q;
+  display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.qlist li:last-child { border-bottom: none; }
+.qlist li::before {
+  content: "Q" counter(q);
+  font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 2px;
+}
+.qlist .qtext { font-size: 14.5px; }
+.qlist .qtext .options { display: block; color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+.tag {
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 3px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent-ink);
+  white-space: nowrap; height: fit-content;
+}
+.tag.rotating { background: var(--accent2-soft); color: var(--accent2); }
+
+.flow { margin: 0 0 20px 17px; padding: 0; list-style: none; counter-reset: step; }
+.flow li {
+  counter-increment: step;
+  display: flex; gap: 14px; padding: 10px 0;
+}
+.flow li::before {
+  content: counter(step);
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border-radius: 50%; width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.flow li div { font-size: 14.5px; padding-top: 1px; }
+.flow li strong { display: block; font-size: 14.5px; }
+.flow li span { color: var(--muted); font-size: 13.5px; }
+
+.assume {
+  margin: 6px 17px 0; padding: 16px 20px; border-radius: 8px;
+  background: var(--accent2-soft); border: 1px solid color-mix(in srgb, var(--accent2) 35%, transparent);
+}
+.assume h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent2); }
+.assume ul { margin: 0; padding-left: 18px; }
+.assume li { font-size: 14px; margin-bottom: 6px; color: var(--ink); }
+.assume li b { font-weight: 600; }
+
+table.compare {
+  width: calc(100% - 17px); margin-left: 17px; border-collapse: collapse; font-size: 13.5px;
+}
+table.compare th, table.compare td {
+  text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line);
+}
+table.compare th {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--muted); font-weight: 600;
+}
+table.compare td.win { color: var(--accent-ink); font-weight: 600; }
+
+.foot {
+  margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
+  font-size: 13px; color: var(--muted);
+}
+</style>
+
+<div class="page">
+
+<div class="meta">
+  <span><b>Status</b> Draft for review</span>
+  <span><b>Owner</b> You</span>
+  <span><b>Prepared</b> 2026-07-08</span>
+</div>
+
+<h1>Monthly Survey &amp; RSVP Check-In — Plan</h1>
+<p class="dek">A recurring tool survey for AI Tinkerers Women in AI, filled during the networking window, plus a QR-based check-in system built on an existing RSVP list. Everything below is a proposal — react to any of it and I'll adjust before we build.</p>
+
+<h2><span class="num">01</span>Why this stack</h2>
+<p class="section-intro">You need identity-linked responses, trend tracking across months, and QR check-in — without taking on a paid platform or ongoing server maintenance.</p>
+
+<table class="compare">
+  <tr><th>Option</th><th>Verdict</th><th>Why</th></tr>
+  <tr><td>Lovable app</td><td>Skip</td><td>Solves this, but adds hosting cost and a platform dependency for something that's really just a form + a spreadsheet.</td></tr>
+  <tr><td>GitHub Pages + Google Forms</td><td>Skip</td><td>Free and fast, but Forms can't easily pre-associate a response with a specific attendee token — you asked for identity tied to RSVP.</td></tr>
+  <tr><td class="win">GitHub Pages + Google Sheets/Apps Script</td><td class="win">Recommended</td><td>Static site is free on GitHub Pages; Sheets + Apps Script acts as a free backend you can already read/edit by hand. Supports personalized tokens, check-in state, and multi-month trend rows in one place.</td></tr>
+</table>
+
+<h2><span class="num">02</span>How it flows</h2>
+<p class="section-intro">Two QR codes per attendee, generated once from your RSVP export, printed on their badge.</p>
+<ol class="flow">
+  <li><div><strong>Import the RSVP list</strong><span>Drop your platform's export (name + email, minimum) into a small import page. It assigns each attendee a random token.</span></div></li>
+  <li><div><strong>Generate two QR codes per person</strong><span>A check-in QR (organizer-facing) and a survey QR (attendee-facing), printed on a badge or table card.</span></div></li>
+  <li><div><strong>Door: organizer scans check-in QR</strong><span>Phone camera + browser page, no app install. Marks that attendee present in the Attendees sheet, in real time.</span></div></li>
+  <li><div><strong>Networking: attendee scans their own survey QR</strong><span>Opens their personal, pre-linked survey. Answers are written to the Responses sheet, tagged with their token and the event date.</span></div></li>
+  <li><div><strong>After the event</strong><span>Both sheets accumulate one tagged row set per month, so a simple chart tab shows trends — tool adoption, agent counts — over time.</span></div></li>
+</ol>
+
+<h2><span class="num">03</span>Draft survey — 13 core questions</h2>
+<p class="section-intro">Fixed every month so answers are comparable over time. Grouped by theme; edit freely.</p>
+
+<ul class="qlist">
+  <li><div class="qtext">What's your current role?<span class="options">Single choice — SWE, Data Scientist / ML Engineer, PM, Founder / Exec, Student, Designer, Researcher, Other</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">What industry do you work in?<span class="options">Single choice + write-in</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">How many years have you worked in tech?<span class="options">&lt;1, 1–3, 4–7, 8–15, 15+</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">What's your employment status right now?<span class="options">Employed full-time, Freelance / contract, Between roles, Student, Founder</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">Which AI tools do you use at least weekly?<span class="options">Multi-select — ChatGPT, Claude, Gemini, Copilot, Cursor, Perplexity, image/video gen, other</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">How many distinct AI agents or tools are in your regular workflow?<span class="options">0, 1–2, 3–5, 6–10, 10+</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">What do you mainly use AI agents for?<span class="options">Multi-select — coding, writing, research, data analysis, automation/ops, image/video, customer-facing product</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">Are the tools you use personal, employer-provided, or both?<span class="options">Single choice</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">How comfortable are you building or customizing an AI agent?<span class="options">1–5 scale, beginner to advanced</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">What's your biggest blocker with AI tools right now?<span class="options">Open text, short</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">Is this your first Women in AI meetup?<span class="options">Yes / no</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">What brought you here tonight?<span class="options">Multi-select — networking, learning, job search, speaking/sharing, mentorship</span></div><span class="tag">core</span></li>
+  <li><div class="qtext">How likely are you to recommend this meetup to a friend?<span class="options">0–10 NPS scale</span></div><span class="tag">core</span></li>
+</ul>
+
+<h2><span class="num">04</span>Rotating slots — 2 questions</h2>
+<p class="section-intro">Swap monthly for whatever's topical. Example set for this month's theme, agents:</p>
+<ul class="qlist">
+  <li><div class="qtext">Have you tried an open-weight model (Llama, Mistral, DeepSeek, etc.) in the past month?<span class="options">Yes / no / not sure what that means</span></div><span class="tag rotating">rotating</span></li>
+  <li><div class="qtext">What topics do you want covered in future meetups?<span class="options">Open text</span></div><span class="tag rotating">rotating</span></li>
+</ul>
+<p style="margin-left:17px; color:var(--muted); font-size:13.5px;">15 questions total — mid-range of your 10–20 target, with room to add a rotating slot later without disturbing trend comparability.</p>
+
+<h2><span class="num">05</span>Open questions before I build</h2>
+<div class="assume">
+<h3>Confirm or correct these assumptions</h3>
+<ul>
+  <li><b>RSVP export format</b> — I'm assuming your custom platform can export a CSV with at minimum name + email. If it's missing email, the survey QR still works (token-based), but you'd lose a fallback way to re-send a badge.</li>
+  <li><b>Badge delivery</b> — assuming both QR codes are printed on a badge or table card handed out at check-in, not emailed ahead of time. Say if you'd rather email the survey QR in advance so people can fill it before they even arrive.</li>
+  <li><b>Cadence</b> — assuming "monthly" means one event per month, one importer run each time, all feeding the same two sheets with an event-date column for trend charts.</li>
+  <li><b>Who maintains it</b> — this needs a one-time setup (~2–3 hrs: Sheet + Apps Script + GitHub Pages), then near-zero upkeep per month beyond running the CSV import. Confirm that's you, or another organizer.</li>
+  <li><b>Public reporting</b> — you said not sure yet. Since raw data lives in a normal Sheet, flipping from private to a public recap later is just a pivot table, no rebuild needed.</li>
+</ul>
+</div>
+
+<h2><span class="num">06</span>If you say go — build phases</h2>
+<div class="card-grid">
+  <div class="card"><h3>1 — Backend</h3><p>Google Sheet with Attendees + Responses tabs, Apps Script Web App exposing check-in and submit-response endpoints.</p></div>
+  <div class="card"><h3>2 — Site</h3><p>GitHub Pages: survey form page, camera-based scanner page, both reading/writing through the Apps Script API.</p></div>
+  <div class="card"><h3>3 — QR tooling</h3><p>Client-side importer: upload your RSVP CSV, get back a printable sheet of badges with two QR codes each.</p></div>
+  <div class="card"><h3>4 — Dry run</h3><p>Test the full loop at the next meetup — check-in scan, survey scan, data lands correctly — before trusting it live.</p></div>
+  <div class="card"><h3>5 — Trends view</h3><p>A simple chart tab or page reading the Responses sheet, once 2–3 months of data exist to compare.</p></div>
+</div>
+
+<div class="foot">Next: tell me what to change in the question list or the assumptions above, and whether to start with Phase 1.</div>
+
+</div>

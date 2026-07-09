@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Women in AI — Monthly Pulse Survey</title>
+<style>
+  :root {
+    --paper: #F1F2EF; --paper-raised: #FFFFFF; --ink: #171A18; --muted: #5B625C; --line: #D8DAD3;
+    --accent: #1F6F6B; --accent-ink: #0E3E3B; --accent-soft: #E1EEEC;
+    --accent2: #C97A2E; --accent2-soft: #F5E6D3;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A; --paper-raised: #1B2022; --ink: #EDEFEA; --muted: #9AA39C; --line: #2A2F2C;
+      --accent: #4FB3AC; --accent-ink: #C9EEEA; --accent-soft: #16302E;
+      --accent2: #E0983F; --accent2-soft: #3A2A16;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink); font-family: var(--sans);
+    margin: 0; padding: 32px 18px 100px; line-height: 1.5;
+  }
+  .page { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .greeting { color: var(--muted); font-size: 14.5px; margin: 0 0 28px; }
+  .q {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .q .tag {
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--accent-ink); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px;
+  }
+  .q.rotating .tag { color: var(--accent2); background: var(--accent2-soft); }
+  .q p.text { font-size: 15px; font-weight: 600; margin: 8px 0 12px; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .options label {
+    display: flex; align-items: center; gap: 10px; font-size: 14.5px;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer;
+  }
+  .options.grid { flex-direction: row; flex-wrap: wrap; }
+  .options.grid label { flex: 0 0 auto; }
+  textarea {
+    width: 100%; min-height: 70px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font-family: inherit; font-size: 14.5px; resize: vertical;
+  }
+  .scale { display: flex; gap: 6px; flex-wrap: wrap; }
+  .scale label {
+    flex: 1 1 0; min-width: 34px; text-align: center; padding: 8px 4px; border-radius: 8px;
+    border: 1px solid var(--line); font-size: 13px; cursor: pointer;
+  }
+  .other-input {
+    margin-top: 8px; width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 14px;
+  }
+  #submit-btn {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: white; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px;
+  }
+  #submit-btn:disabled { opacity: 0.5; }
+  #status { text-align: center; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  #done {
+    text-align: center; padding: 60px 20px; display: none;
+  }
+  #done h2 { font-size: 22px; margin-bottom: 6px; }
+  #done p { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page" id="form-page">
+  <h1>Monthly Pulse Survey</h1>
+  <p class="greeting" id="greeting">Loading your survey…</p>
+  <form id="survey-form"></form>
+  <button id="submit-btn" type="submit" form="survey-form" disabled>Submit</button>
+  <p id="status"></p>
+</div>
+<div class="page" id="done">
+  <h2>Thanks! 🎉</h2>
+  <p>Your answers are in. Enjoy the rest of the event.</p>
+</div>
+
+<script src="config.js"></script>
+<script src="jsonp.js"></script>
+<script>
+  // Same 13 core + 2 rotating questions as plan.html §03/§04. Swap the
+  // `rotating: true` pair each month to match the Responses sheet headers
+  // (SETUP.md step 1) — everything else should stay fixed for trend comparability.
+  var QUESTIONS = [
+    { key: 'q1_role', text: "What's your current role?", type: 'single',
+      options: ['SWE', 'Data Scientist / ML Engineer', 'PM', 'Founder / Exec', 'Student', 'Designer', 'Researcher', 'Other'] },
+    { key: 'q2_industry', text: 'What industry do you work in?', type: 'single-other',
+      options: ['Tech / Software', 'Finance', 'Healthcare', 'Retail / E-commerce', 'Education', 'Government / Nonprofit', 'Media / Entertainment'] },
+    { key: 'q3_years', text: 'How many years have you worked in tech?', type: 'single',
+      options: ['<1', '1–3', '4–7', '8–15', '15+'] },
+    { key: 'q4_employment', text: "What's your employment status right now?", type: 'single',
+      options: ['Employed full-time', 'Freelance / contract', 'Between roles', 'Student', 'Founder'] },
+    { key: 'q5_tools', text: 'Which AI tools do you use at least weekly?', type: 'multi',
+      options: ['ChatGPT', 'Claude', 'Gemini', 'Copilot', 'Cursor', 'Perplexity', 'Image/video gen', 'Other'] },
+    { key: 'q6_agent_count', text: 'How many distinct AI agents or tools are in your regular workflow?', type: 'single',
+      options: ['0', '1–2', '3–5', '6–10', '10+'] },
+    { key: 'q7_agent_use', text: 'What do you mainly use AI agents for?', type: 'multi',
+      options: ['Coding', 'Writing', 'Research', 'Data analysis', 'Automation/ops', 'Image/video', 'Customer-facing product'] },
+    { key: 'q8_tool_ownership', text: 'Are the tools you use personal, employer-provided, or both?', type: 'single',
+      options: ['Personal', 'Employer-provided', 'Both'] },
+    { key: 'q9_comfort', text: 'How comfortable are you building or customizing an AI agent?', type: 'scale', scaleMin: 1, scaleMax: 5 },
+    { key: 'q10_blocker', text: "What's your biggest blocker with AI tools right now?", type: 'text' },
+    { key: 'q11_first_meetup', text: 'Is this your first Women in AI meetup?', type: 'single', options: ['Yes', 'No'] },
+    { key: 'q12_brought_here', text: 'What brought you here tonight?', type: 'multi',
+      options: ['Networking', 'Learning', 'Job search', 'Speaking/sharing', 'Mentorship'] },
+    { key: 'q13_nps', text: 'How likely are you to recommend this meetup to a friend?', type: 'scale', scaleMin: 0, scaleMax: 10 },
+    { key: 'q14_openweight', text: 'Have you tried an open-weight model (Llama, Mistral, DeepSeek, etc.) in the past month?', type: 'single',
+      options: ['Yes', 'No', 'Not sure what that means'], rotating: true },
+    { key: 'q15_future_topics', text: 'What topics do you want covered in future meetups?', type: 'text', rotating: true }
+  ];
+
+  var token = new URLSearchParams(window.location.search).get('t');
+  var greetingEl = document.getElementById('greeting');
+  var formEl = document.getElementById('survey-form');
+  var submitBtn = document.getElementById('submit-btn');
+  var statusEl = document.getElementById('status');
+
+  if (!token) {
+    greetingEl.textContent = 'Missing survey link — please rescan your badge QR code.';
+  } else {
+    jsonp(window.PULSE_CONFIG.APPS_SCRIPT_URL, { action: 'lookup', token: token }, function (res) {
+      if (!res.ok) {
+        greetingEl.textContent = "Couldn't find your invite — please check with an organizer.";
+        return;
+      }
+      greetingEl.textContent = res.checkedIn
+        ? 'Hi ' + res.name + ' — thanks for coming!'
+        : 'Hi ' + res.name + ' — welcome!';
+      renderForm();
+      submitBtn.disabled = false;
+    });
+  }
+
+  function renderForm() {
+    QUESTIONS.forEach(function (q) {
+      var div = document.createElement('div');
+      div.className = 'q' + (q.rotating ? ' rotating' : '');
+      var tag = '<span class="tag">' + (q.rotating ? 'this month' : 'core') + '</span>';
+      var body = '<p class="text">' + q.text + '</p>';
+
+      if (q.type === 'single' || q.type === 'single-other') {
+        body += '<div class="options">' + q.options.map(function (opt) {
+          return '<label><input type="radio" name="' + q.key + '" value="' + opt + '">' + opt + '</label>';
+        }).join('') + (q.type === 'single-other' ? '<label><input type="radio" name="' + q.key + '" value="__other__">Other</label></div>' +
+          '<input type="text" class="other-input" name="' + q.key + '_other" placeholder="Tell us more" style="display:none">' : '</div>');
+      } else if (q.type === 'multi') {
+        body += '<div class="options grid">' + q.options.map(function (opt) {
+          return '<label><input type="checkbox" name="' + q.key + '" value="' + opt + '">' + opt + '</label>';
+        }).join('') + '</div>';
+      } else if (q.type === 'scale') {
+        var vals = [];
+        for (var v = q.scaleMin; v <= q.scaleMax; v++) vals.push(v);
+        body += '<div class="scale">' + vals.map(function (v) {
+          return '<label><input type="radio" name="' + q.key + '" value="' + v + '" style="display:block;margin:0 auto 4px">' + v + '</label>';
+        }).join('') + '</div>';
+      } else if (q.type === 'text') {
+        body += '<textarea name="' + q.key + '"></textarea>';
+      }
+
+      div.innerHTML = tag + body;
+      formEl.appendChild(div);
+    });
+
+    // Reveal free-text box when "Other" is picked on single-other questions.
+    formEl.addEventListener('change', function (e) {
+      if (e.target.type === 'radio' && e.target.value === '__other__') {
+        var otherInput = formEl.querySelector('input[name="' + e.target.name + '_other"]');
+        if (otherInput) otherInput.style.display = 'block';
+      }
+    });
+  }
+
+  formEl.addEventListener('submit', function (e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    statusEl.textContent = 'Submitting…';
+
+    var fd = new FormData(formEl);
+    var params = { action: 'submit', token: token, event_date: window.PULSE_CONFIG.EVENT_DATE };
+
+    QUESTIONS.forEach(function (q) {
+      if (q.type === 'multi') {
+        params[q.key] = fd.getAll(q.key).join(', ');
+      } else if (q.type === 'single-other') {
+        var val = fd.get(q.key);
+        params[q.key] = val === '__other__' ? (fd.get(q.key + '_other') || 'Other') : (val || '');
+      } else {
+        params[q.key] = fd.get(q.key) || '';
+      }
+    });
+
+    jsonp(window.PULSE_CONFIG.APPS_SCRIPT_URL, params, function (res) {
+      if (!res.ok) {
+        statusEl.textContent = 'Something went wrong — please try again.';
+        submitBtn.disabled = false;
+        return;
+      }
+      document.getElementById('form-page').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+    });
+  });
+</script>
+</body>
+</html>

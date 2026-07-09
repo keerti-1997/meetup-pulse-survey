@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Check-in — Women in AI</title>
+<style>
+  :root {
+    --paper: #F1F2EF; --ink: #171A18; --muted: #5B625C; --line: #D8DAD3;
+    --accent: #1F6F6B; --accent-ink: #0E3E3B; --accent-soft: #E1EEEC;
+    --warn: #C97A2E; --warn-soft: #F5E6D3; --bad: #B3413D; --bad-soft: #F6E1DF;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A; --ink: #EDEFEA; --muted: #9AA39C; --line: #2A2F2C;
+      --accent: #4FB3AC; --accent-ink: #C9EEEA; --accent-soft: #16302E;
+      --warn: #E0983F; --warn-soft: #3A2A16; --bad: #E0736E; --bad-soft: #3A1E1C;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink); font-family: var(--sans);
+    margin: 0; padding: 32px 20px; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .wrap { max-width: 420px; width: 100%; }
+  h1 { font-size: 20px; margin: 0 0 24px; text-align: center; }
+  .card {
+    border-radius: 12px; padding: 28px 24px; text-align: center;
+    border: 1px solid var(--line); background: var(--accent-soft);
+    min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .card.warn { background: var(--warn-soft); }
+  .card.bad { background: var(--bad-soft); }
+  .card .status { font-size: 15px; color: var(--muted); }
+  .card .name { font-size: 26px; font-weight: 800; margin: 6px 0; }
+  .card .sub { font-size: 14px; color: var(--muted); }
+  form { margin-top: 20px; display: flex; gap: 8px; }
+  input[type=text] {
+    flex: 1; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: transparent; color: var(--ink); font-size: 16px;
+  }
+  button {
+    padding: 12px 18px; border-radius: 8px; border: none; background: var(--accent);
+    color: white; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; }
+  .hint { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Door check-in</h1>
+  <div id="card" class="card"><div class="status">Scan a badge, or enter a token below.</div></div>
+  <form id="manual-form">
+    <input id="manual-token" type="text" placeholder="Token from badge" autocomplete="off" autocapitalize="off">
+    <button type="submit">Check in</button>
+  </form>
+  <p class="hint">Badge QR codes link straight to this page with the token
+    filled in — most phone cameras open that automatically. Use the field
+    above only if a scan doesn't land right.</p>
+</div>
+
+<script src="config.js"></script>
+<script src="jsonp.js"></script>
+<script>
+  var cardEl = document.getElementById('card');
+
+  function render(state, name, sub) {
+    cardEl.className = 'card' + (state === 'ok' ? '' : state === 'warn' ? ' warn' : ' bad');
+    if (name) {
+      cardEl.innerHTML = '<div class="status">' + sub + '</div><div class="name">' + name + '</div>';
+    } else {
+      cardEl.innerHTML = '<div class="status">' + sub + '</div>';
+    }
+  }
+
+  function checkin(token) {
+    if (!token) return;
+    render('ok', null, 'Checking in…');
+    jsonp(window.PULSE_CONFIG.APPS_SCRIPT_URL, { action: 'checkin', token: token }, function (res) {
+      if (!res.ok) {
+        render('bad', null, 'Unknown token — try again or check the badge.');
+        return;
+      }
+      if (res.alreadyCheckedIn) {
+        render('warn', res.name, 'Already checked in ⚠');
+      } else {
+        render('ok', res.name, 'Checked in ✓');
+      }
+    });
+  }
+
+  document.getElementById('manual-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = document.getElementById('manual-token').value.trim();
+    checkin(t);
+  });
+
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var token = params.get('t');
+    if (token) checkin(token);
+  })();
+</script>
+</body>
+</html>
