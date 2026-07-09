@@ -29,26 +29,36 @@
   header.brand .divider { width: 1px; height: 22px; background: var(--line); }
   header.brand .chapter { font-size: 13px; color: var(--muted); font-weight: 600; }
   h1 { font-size: 22px; margin: 0 0 4px; }
-  .greeting { color: var(--muted); font-size: 14.5px; margin: 0 0 28px; }
-  .q {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-    padding: 16px 18px; margin-bottom: 14px;
+  .greeting { color: var(--muted); font-size: 14.5px; margin: 0 0 24px; }
+
+  .progress-wrap { margin-bottom: 18px; }
+  .step-label {
+    font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 7px;
   }
-  .q .tag {
+  .progress-track { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+
+  .slides-viewport { overflow: hidden; }
+  .slides-track { display: flex; align-items: flex-start; transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1); }
+  .slide {
+    flex: 0 0 100%; min-width: 100%; box-sizing: border-box;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
+  }
+  .slide .tag {
     font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
     color: var(--accent-ink); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px;
   }
-  .q.rotating .tag { color: var(--accent2); background: var(--accent2-soft); }
-  .q p.text { font-size: 15px; font-weight: 600; margin: 8px 0 12px; }
+  .slide.rotating .tag { color: var(--accent2); background: var(--accent2-soft); }
+  .slide p.text { font-size: 16.5px; font-weight: 700; margin: 10px 0 16px; }
   .options { display: flex; flex-direction: column; gap: 8px; }
   .options label {
     display: flex; align-items: center; gap: 10px; font-size: 14.5px;
-    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer;
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer;
   }
   .options.grid { flex-direction: row; flex-wrap: wrap; }
   .options.grid label { flex: 0 0 auto; }
   textarea {
-    width: 100%; min-height: 70px; padding: 10px 12px; border-radius: 8px;
+    width: 100%; min-height: 90px; padding: 10px 12px; border-radius: 8px;
     border: 1px solid var(--line); background: transparent; color: var(--ink);
     font-family: inherit; font-size: 14.5px; resize: vertical;
   }
@@ -61,15 +71,17 @@
     margin-top: 8px; width: 100%; padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 14px;
   }
-  #submit-btn {
-    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
-    color: #0F1115; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px;
+
+  .nav-row { display: flex; gap: 10px; margin-top: 18px; }
+  .nav-btn {
+    flex: 1; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 15px;
+    cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink);
   }
-  #submit-btn:disabled { opacity: 0.5; }
+  .nav-btn.primary { background: var(--accent); color: #0F1115; border: none; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+
   #status { text-align: center; margin-top: 14px; font-size: 14px; color: var(--muted); }
-  #done {
-    text-align: center; padding: 60px 20px; display: none;
-  }
+  #done { text-align: center; padding: 60px 20px; display: none; }
   #done h2 { font-size: 22px; margin-bottom: 6px; }
   #done p { color: var(--muted); }
 </style>
@@ -83,8 +95,22 @@
   </header>
   <h1>Monthly Pulse Survey</h1>
   <p class="greeting">Anonymous — takes about 2 minutes.</p>
-  <form id="survey-form"></form>
-  <button id="submit-btn" type="submit" form="survey-form">Submit</button>
+
+  <div class="progress-wrap">
+    <div class="step-label" id="step-label"></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="slides-viewport">
+    <form id="survey-form">
+      <div class="slides-track" id="slides-track"></div>
+    </form>
+  </div>
+
+  <div class="nav-row">
+    <button type="button" id="back-btn" class="nav-btn">Back</button>
+    <button type="button" id="next-btn" class="nav-btn primary">Next</button>
+  </div>
   <p id="status"></p>
 </div>
 <div class="page" id="done">
@@ -167,15 +193,22 @@
   ];
 
   var formEl = document.getElementById('survey-form');
-  var submitBtn = document.getElementById('submit-btn');
+  var trackEl = document.getElementById('slides-track');
+  var backBtn = document.getElementById('back-btn');
+  var nextBtn = document.getElementById('next-btn');
   var statusEl = document.getElementById('status');
+  var stepLabelEl = document.getElementById('step-label');
+  var progressFillEl = document.getElementById('progress-fill');
 
-  renderForm();
+  var currentIndex = 0;
 
-  function renderForm() {
+  renderSlides();
+  updateSlide();
+
+  function renderSlides() {
     QUESTIONS.forEach(function (q) {
       var div = document.createElement('div');
-      div.className = 'q' + (q.rotating ? ' rotating' : '');
+      div.className = 'slide' + (q.rotating ? ' rotating' : '');
       var tag = '<span class="tag">' + (q.rotating ? 'this month' : 'core') + '</span>';
       var body = '<p class="text">' + q.text + '</p>';
 
@@ -199,7 +232,7 @@
       }
 
       div.innerHTML = tag + body;
-      formEl.appendChild(div);
+      trackEl.appendChild(div);
     });
 
     // Reveal free-text box when "Other" is picked on single-other questions.
@@ -211,9 +244,33 @@
     });
   }
 
-  formEl.addEventListener('submit', function (e) {
-    e.preventDefault();
-    submitBtn.disabled = true;
+  function updateSlide() {
+    trackEl.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+    stepLabelEl.textContent = 'Question ' + (currentIndex + 1) + ' of ' + QUESTIONS.length;
+    progressFillEl.style.width = (((currentIndex + 1) / QUESTIONS.length) * 100) + '%';
+    backBtn.disabled = currentIndex === 0;
+    nextBtn.textContent = currentIndex === QUESTIONS.length - 1 ? 'Submit' : 'Next';
+    statusEl.textContent = '';
+  }
+
+  backBtn.addEventListener('click', function () {
+    if (currentIndex === 0) return;
+    currentIndex--;
+    updateSlide();
+  });
+
+  nextBtn.addEventListener('click', function () {
+    if (currentIndex < QUESTIONS.length - 1) {
+      currentIndex++;
+      updateSlide();
+    } else {
+      submitSurvey();
+    }
+  });
+
+  function submitSurvey() {
+    backBtn.disabled = true;
+    nextBtn.disabled = true;
     statusEl.textContent = 'Submitting…';
 
     var fd = new FormData(formEl);
@@ -233,13 +290,14 @@
     jsonp(PULSE_CONFIG.APPS_SCRIPT_URL, params, function (res) {
       if (!res.ok) {
         statusEl.textContent = 'Something went wrong — please try again.';
-        submitBtn.disabled = false;
+        backBtn.disabled = false;
+        nextBtn.disabled = false;
         return;
       }
       document.getElementById('form-page').style.display = 'none';
       document.getElementById('done').style.display = 'block';
     });
-  });
+  }
 </script>
 </body>
 </html>
