@@ -74,9 +74,9 @@
 <body>
 <div class="page" id="form-page">
   <h1>Monthly Pulse Survey</h1>
-  <p class="greeting" id="greeting">Loading your survey…</p>
+  <p class="greeting">Anonymous — takes about 2 minutes.</p>
   <form id="survey-form"></form>
-  <button id="submit-btn" type="submit" form="survey-form" disabled>Submit</button>
+  <button id="submit-btn" type="submit" form="survey-form">Submit</button>
   <p id="status"></p>
 </div>
 <div class="page" id="done">
@@ -118,27 +118,11 @@
     { key: 'q15_future_topics', text: 'What topics do you want covered in future meetups?', type: 'text', rotating: true }
   ];
 
-  var token = new URLSearchParams(window.location.search).get('t');
-  var greetingEl = document.getElementById('greeting');
   var formEl = document.getElementById('survey-form');
   var submitBtn = document.getElementById('submit-btn');
   var statusEl = document.getElementById('status');
 
-  if (!token) {
-    greetingEl.textContent = 'Missing survey link — please rescan your badge QR code.';
-  } else {
-    jsonp(window.PULSE_CONFIG.APPS_SCRIPT_URL, { action: 'lookup', token: token }, function (res) {
-      if (!res.ok) {
-        greetingEl.textContent = "Couldn't find your invite — please check with an organizer.";
-        return;
-      }
-      greetingEl.textContent = res.checkedIn
-        ? 'Hi ' + res.name + ' — thanks for coming!'
-        : 'Hi ' + res.name + ' — welcome!';
-      renderForm();
-      submitBtn.disabled = false;
-    });
-  }
+  renderForm();
 
   function renderForm() {
     QUESTIONS.forEach(function (q) {
@@ -185,7 +169,7 @@
     statusEl.textContent = 'Submitting…';
 
     var fd = new FormData(formEl);
-    var params = { action: 'submit', token: token, event_date: window.PULSE_CONFIG.EVENT_DATE };
+    var params = { action: 'submit', event_date: window.PULSE_CONFIG.EVENT_DATE };
 
     QUESTIONS.forEach(function (q) {
       if (q.type === 'multi') {

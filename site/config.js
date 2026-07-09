@@ -2,6 +2,5 @@
 // reads from here so there's one place to update per event.
 window.PULSE_CONFIG = {
   APPS_SCRIPT_URL: 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE', // ends in /exec
-  EVENT_DATE: '2026-07-14', // YYYY-MM-DD, this event's date
-  SITE_BASE_URL: 'https://keerti-1997.github.io/meetup-pulse-survey/site/' // used by import.html to build badge QR links
+  EVENT_DATE: '2026-07-14' // YYYY-MM-DD, this event's date
 };
