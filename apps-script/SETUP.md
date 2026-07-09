@@ -19,7 +19,7 @@ event_date	submitted_at	q1_role	q2_industry	q3_years	q4_employment	q5_tools	q6_a
 The `q14_*`/`q15_*` columns are this month's rotating slots (see
 [plan.html](../plan.html) §04). Swap them for next month's rotating
 questions by renaming those two header cells and updating the `ROTATING`
-entries in `site/survey.html` to match — the script needs no changes
+entries in `survey.html` to match — the script needs no changes
 either way, since it writes whatever column names it finds in row 1.
 
 ## 2. Add the script
@@ -42,10 +42,10 @@ until a new version is deployed.
 ## 4. Wire it into the site
 
 Paste that URL into `APPS_SCRIPT_URL` in
-[`site/config.js`](../site/config.js), along with this event's date in
+[`config.js`](../config.js), along with this event's date in
 `EVENT_DATE`.
 
 ## 5. Smoke test
 
-Open `site/survey.html`, submit a test response, and confirm a new row
+Open `survey.html`, submit a test response, and confirm a new row
 lands in the Responses sheet.
