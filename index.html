@@ -2,11 +2,244 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Women in AI — Pulse Survey</title>
-<meta http-equiv="refresh" content="0; url=survey.html">
-<link rel="canonical" href="survey.html">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Women in AI — Monthly Pulse Survey</title>
+<style>
+  :root {
+    --bg: #0F1115; --surface: #171A20; --ink: #F2F3F5; --muted: #9AA3AE; --line: #262B33;
+    --accent: #6C8CF5; --accent-ink: #DCE4FF; --accent-soft: rgba(108, 140, 245, 0.16);
+    --accent2: #E0983F; --accent2-soft: rgba(224, 152, 63, 0.16);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    margin: 0; padding: 32px 18px 100px; line-height: 1.5;
+  }
+  .page { max-width: 560px; margin: 0 auto; }
+  header.brand {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+  }
+  header.brand .logo-chip {
+    background: #FFFFFF; border-radius: 6px; padding: 5px 10px; line-height: 0;
+  }
+  header.brand img { height: 18px; width: auto; display: block; }
+  header.brand .divider { width: 1px; height: 22px; background: var(--line); }
+  header.brand .chapter { font-size: 13px; color: var(--muted); font-weight: 600; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .greeting { color: var(--muted); font-size: 14.5px; margin: 0 0 28px; }
+  .q {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .q .tag {
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--accent-ink); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px;
+  }
+  .q.rotating .tag { color: var(--accent2); background: var(--accent2-soft); }
+  .q p.text { font-size: 15px; font-weight: 600; margin: 8px 0 12px; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .options label {
+    display: flex; align-items: center; gap: 10px; font-size: 14.5px;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer;
+  }
+  .options.grid { flex-direction: row; flex-wrap: wrap; }
+  .options.grid label { flex: 0 0 auto; }
+  textarea {
+    width: 100%; min-height: 70px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font-family: inherit; font-size: 14.5px; resize: vertical;
+  }
+  .scale { display: flex; gap: 6px; flex-wrap: wrap; }
+  .scale label {
+    flex: 1 1 0; min-width: 34px; text-align: center; padding: 8px 4px; border-radius: 8px;
+    border: 1px solid var(--line); font-size: 13px; cursor: pointer;
+  }
+  .other-input {
+    margin-top: 8px; width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 14px;
+  }
+  #submit-btn {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0F1115; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px;
+  }
+  #submit-btn:disabled { opacity: 0.5; }
+  #status { text-align: center; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  #done {
+    text-align: center; padding: 60px 20px; display: none;
+  }
+  #done h2 { font-size: 22px; margin-bottom: 6px; }
+  #done p { color: var(--muted); }
+</style>
 </head>
 <body>
-<p><a href="survey.html">Continue to the survey</a></p>
+<div class="page" id="form-page">
+  <header class="brand">
+    <span class="logo-chip"><img src="https://images.aitinkerers.org/blog_images/ai-tinkerers-logo-svg-e9v7.png" alt="AI Tinkerers"></span>
+    <div class="divider"></div>
+    <span class="chapter">Seattle · Women in AI</span>
+  </header>
+  <h1>Monthly Pulse Survey</h1>
+  <p class="greeting">Anonymous — takes about 2 minutes.</p>
+  <form id="survey-form"></form>
+  <button id="submit-btn" type="submit" form="survey-form">Submit</button>
+  <p id="status"></p>
+</div>
+<div class="page" id="done">
+  <h2>Thanks! 🎉</h2>
+  <p>Your answers are in. Enjoy the rest of the event.</p>
+</div>
+
+<script>
+  // Fill these in per SETUP.md, then commit.
+  var PULSE_CONFIG = {
+    APPS_SCRIPT_URL: 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE', // ends in /exec
+    EVENT_DATE: '2026-07-14' // YYYY-MM-DD, this event's date
+  };
+
+  // Cross-origin GET to the Apps Script backend via a dynamically injected
+  // <script> tag. Apps Script's fetch()-readable CORS headers are unreliable;
+  // script-tag JSONP sidesteps that entirely since script loads aren't
+  // subject to CORS. See apps-script/Code.gs `respond()` for the server-side half.
+  function jsonp(url, params, callback) {
+    var cbName = 'jsonp_cb_' + Math.random().toString(36).slice(2);
+    var script = document.createElement('script');
+
+    var timeout = setTimeout(function () {
+      cleanup();
+      callback({ ok: false, error: 'request timed out' });
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function (data) {
+      cleanup();
+      callback(data);
+    };
+
+    var query = Object.keys(params)
+      .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k]); })
+      .join('&');
+
+    script.src = url + '?' + query + '&callback=' + cbName;
+    script.onerror = function () {
+      cleanup();
+      callback({ ok: false, error: 'network error' });
+    };
+    document.body.appendChild(script);
+  }
+
+  // Same 13 core + 2 rotating questions as plan.html §03/§04. Swap the
+  // `rotating: true` pair each month to match the Responses sheet headers
+  // (SETUP.md step 1) — everything else should stay fixed for trend comparability.
+  var QUESTIONS = [
+    { key: 'q1_role', text: "What's your current role?", type: 'single',
+      options: ['SWE', 'Data Scientist / ML Engineer', 'PM', 'Founder / Exec', 'Student', 'Designer', 'Researcher', 'Other'] },
+    { key: 'q2_industry', text: 'What industry do you work in?', type: 'single-other',
+      options: ['Tech / Software', 'Finance', 'Healthcare', 'Retail / E-commerce', 'Education', 'Government / Nonprofit', 'Media / Entertainment'] },
+    { key: 'q3_years', text: 'How many years have you worked in tech?', type: 'single',
+      options: ['<1', '1–3', '4–7', '8–15', '15+'] },
+    { key: 'q4_employment', text: "What's your employment status right now?", type: 'single',
+      options: ['Employed full-time', 'Freelance / contract', 'Between roles', 'Student', 'Founder'] },
+    { key: 'q5_tools', text: 'Which AI tools do you use at least weekly?', type: 'multi',
+      options: ['ChatGPT', 'Claude', 'Gemini', 'Copilot', 'Cursor', 'Perplexity', 'Image/video gen', 'Other'] },
+    { key: 'q6_agent_count', text: 'How many distinct AI agents or tools are in your regular workflow?', type: 'single',
+      options: ['0', '1–2', '3–5', '6–10', '10+'] },
+    { key: 'q7_agent_use', text: 'What do you mainly use AI agents for?', type: 'multi',
+      options: ['Coding', 'Writing', 'Research', 'Data analysis', 'Automation/ops', 'Image/video', 'Customer-facing product'] },
+    { key: 'q8_tool_ownership', text: 'Are the tools you use personal, employer-provided, or both?', type: 'single',
+      options: ['Personal', 'Employer-provided', 'Both'] },
+    { key: 'q9_comfort', text: 'How comfortable are you building or customizing an AI agent?', type: 'scale', scaleMin: 1, scaleMax: 5 },
+    { key: 'q10_blocker', text: "What's your biggest blocker with AI tools right now?", type: 'text' },
+    { key: 'q11_first_meetup', text: 'Is this your first Women in AI meetup?', type: 'single', options: ['Yes', 'No'] },
+    { key: 'q12_brought_here', text: 'What brought you here tonight?', type: 'multi',
+      options: ['Networking', 'Learning', 'Job search', 'Speaking/sharing', 'Mentorship'] },
+    { key: 'q13_nps', text: 'How likely are you to recommend this meetup to a friend?', type: 'scale', scaleMin: 0, scaleMax: 10 },
+    { key: 'q14_openweight', text: 'Have you tried an open-weight model (Llama, Mistral, DeepSeek, etc.) in the past month?', type: 'single',
+      options: ['Yes', 'No', 'Not sure what that means'], rotating: true },
+    { key: 'q15_future_topics', text: 'What topics do you want covered in future meetups?', type: 'text', rotating: true }
+  ];
+
+  var formEl = document.getElementById('survey-form');
+  var submitBtn = document.getElementById('submit-btn');
+  var statusEl = document.getElementById('status');
+
+  renderForm();
+
+  function renderForm() {
+    QUESTIONS.forEach(function (q) {
+      var div = document.createElement('div');
+      div.className = 'q' + (q.rotating ? ' rotating' : '');
+      var tag = '<span class="tag">' + (q.rotating ? 'this month' : 'core') + '</span>';
+      var body = '<p class="text">' + q.text + '</p>';
+
+      if (q.type === 'single' || q.type === 'single-other') {
+        body += '<div class="options">' + q.options.map(function (opt) {
+          return '<label><input type="radio" name="' + q.key + '" value="' + opt + '">' + opt + '</label>';
+        }).join('') + (q.type === 'single-other' ? '<label><input type="radio" name="' + q.key + '" value="__other__">Other</label></div>' +
+          '<input type="text" class="other-input" name="' + q.key + '_other" placeholder="Tell us more" style="display:none">' : '</div>');
+      } else if (q.type === 'multi') {
+        body += '<div class="options grid">' + q.options.map(function (opt) {
+          return '<label><input type="checkbox" name="' + q.key + '" value="' + opt + '">' + opt + '</label>';
+        }).join('') + '</div>';
+      } else if (q.type === 'scale') {
+        var vals = [];
+        for (var v = q.scaleMin; v <= q.scaleMax; v++) vals.push(v);
+        body += '<div class="scale">' + vals.map(function (v) {
+          return '<label><input type="radio" name="' + q.key + '" value="' + v + '" style="display:block;margin:0 auto 4px">' + v + '</label>';
+        }).join('') + '</div>';
+      } else if (q.type === 'text') {
+        body += '<textarea name="' + q.key + '"></textarea>';
+      }
+
+      div.innerHTML = tag + body;
+      formEl.appendChild(div);
+    });
+
+    // Reveal free-text box when "Other" is picked on single-other questions.
+    formEl.addEventListener('change', function (e) {
+      if (e.target.type === 'radio' && e.target.value === '__other__') {
+        var otherInput = formEl.querySelector('input[name="' + e.target.name + '_other"]');
+        if (otherInput) otherInput.style.display = 'block';
+      }
+    });
+  }
+
+  formEl.addEventListener('submit', function (e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    statusEl.textContent = 'Submitting…';
+
+    var fd = new FormData(formEl);
+    var params = { action: 'submit', event_date: PULSE_CONFIG.EVENT_DATE };
+
+    QUESTIONS.forEach(function (q) {
+      if (q.type === 'multi') {
+        params[q.key] = fd.getAll(q.key).join(', ');
+      } else if (q.type === 'single-other') {
+        var val = fd.get(q.key);
+        params[q.key] = val === '__other__' ? (fd.get(q.key + '_other') || 'Other') : (val || '');
+      } else {
+        params[q.key] = fd.get(q.key) || '';
+      }
+    });
+
+    jsonp(PULSE_CONFIG.APPS_SCRIPT_URL, params, function (res) {
+      if (!res.ok) {
+        statusEl.textContent = 'Something went wrong — please try again.';
+        submitBtn.disabled = false;
+        return;
+      }
+      document.getElementById('form-page').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+    });
+  });
+</script>
 </body>
 </html>
