@@ -42,10 +42,25 @@ until a new version is deployed.
 ## 4. Wire it into the site
 
 Paste that URL into `APPS_SCRIPT_URL` in the `PULSE_CONFIG` object near the
-top of [`index.html`](../index.html)'s inline script, along with this
-event's date in `EVENT_DATE`.
+top of both [`index.html`](../index.html)'s and
+[`dashboard.html`](../dashboard.html)'s inline scripts (same deployment,
+same URL), along with this event's date in `index.html`'s `EVENT_DATE`.
 
 ## 5. Smoke test
 
-Open `index.html`, submit a test response, and confirm a new row lands in
-the Responses sheet.
+Open `index.html`, submit a test response, confirm a new row lands in the
+Responses sheet, then open `dashboard.html` and confirm the response shows
+up in the aggregate counts.
+
+## Trends dashboard
+
+`dashboard.html` is a separate public page that calls the same Apps Script
+deployment with `action=trends` instead of `action=submit`. It only ever
+receives aggregate counts/percentages/averages computed server-side in
+`handleTrends` (see Code.gs) — individual responses and free-text answers
+(`q10_blocker`, `q15_future_topics`) never leave the Sheet. If a rotating
+question's *type* changes (e.g. swapping a scale question in), update the
+`TEXT_FIELDS`/`SCALE_FIELDS` maps in Code.gs and the `QUESTION_META` array
+in dashboard.html to match — both already need to change when the
+questions themselves change, so this is one more thing to check at the
+same time, not a separate step.
